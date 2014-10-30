@@ -6,6 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "bin": {
+    "issues-transfer": "bin/issues-transfer.js"
+  },
   "repository": {
     "type": "git",
     "url": "git@github.com:jeffandersen/issues-transfer.git"
