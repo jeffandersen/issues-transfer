@@ -2,17 +2,24 @@ var issuesTransfer = exports; exports.constructor = function issuesTransfer(){};
 
 var _ = require('lodash');
 var async = require('async');
+var prompt = require('prompt');
 var GithubApi = require('github');
 
 var sample = 'organization/repo-name';
 
 function IssuesTransfer(opts) {
+  if (opts.h || opts.help || (opts['_'] && Object.keys(opts).length === 1)) {
+    this.help = true;
+    return;
+  }
+
   this.token = opts.token || opts.t;
   this.sourceRepo = opts.from;
   this.destinationRepo = opts.to;
   this.transferLabels = opts['transfer-labels'] || true;
   this.transferAssignee = opts['transfer-assignees'] || true;
   this.onlyLabels = opts['only-labels'] || null;
+  this.autoClose = opts['auto-close'] || false;
   this.link = opts.link || true;
 
   if (!_.isString(this.token)) {
@@ -48,7 +55,54 @@ function IssuesTransfer(opts) {
   });
 }
 
+IssuesTransfer.prototype.showHelp = function(cb) {
+  var requiredArgs = [
+    '--token <token>',
+    '--from <user/repo>',
+    '--to <user/repo>'
+  ];
+
+  var optionalArgs = [
+    '\t--transfer-labels\t\t Whether to copy labels with the issue',
+    '\t--transfer-assignees\t\t Whether to copy assignees with the issue',
+    '\t--auto-close\t\t\t Close source issue after creating new',
+    '\t--only-labels <labels,to,copy>\t Only copy issues with particular labels'
+  ];
+
+  console.log('\nUsage:\n\nissues-transfer ' + requiredArgs.join(' '));
+  console.log('\nAvailable options:\n' + optionalArgs.join('\n'));
+  console.log('\n');
+
+  cb();
+};
+
 IssuesTransfer.prototype.run = function(cb) {
+  var self = this;
+
+  if (self.help) {
+    return self.showHelp(cb);
+  }
+
+  prompt.delimiter = '';
+  prompt.message = '';
+  prompt.start();
+
+  var question = 'Continue? [Y/n]';
+  prompt.get(question, function(err, result) {
+    if (err) {
+      return cb(err);
+    }
+
+    var answer = result[question].toLowerCase();
+    if (answer === 'n') {
+      return cb();
+    }
+
+    self._run(cb);
+  });
+};
+
+IssuesTransfer.prototype._run = function(cb) {
   var self = this;
   var issuesFound = [];
   var hasNextPage = true;
