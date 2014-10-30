@@ -6,14 +6,13 @@ var GithubApi = require('github');
 
 var sample = 'organization/repo-name';
 
-var testToken = 'a98f1a357211f15df7c2930aa634a4a13b875605';
-
 function IssuesTransfer(opts) {
   this.token = opts.token || opts.t;
   this.sourceRepo = opts.from;
   this.destinationRepo = opts.to;
-  this.state = opts.state || 'open';
-  this.labels = opts.labels || true;
+  this.transferLabels = opts['transfer-labels'] || true;
+  this.transferAssignee = opts['transfer-assignees'] || true;
+  this.onlyLabels = opts['only-labels'] || null;
   this.link = opts.link || true;
 
   if (!_.isString(this.token)) {
@@ -27,6 +26,17 @@ function IssuesTransfer(opts) {
   if (!_.isString(this.destinationRepo)) {
     throw new Error('--to option required (eg. --to=' + sample + ')');
   }
+
+  console.log('Beginning transfer of issues');
+  console.log('--------------------------Options-----------------------------');
+  console.log('Source repository \t\t', this.sourceRepo);
+  console.log('Destination repository \t\t', this.destinationRepo);
+  console.log('Transfer labels? \t\t', !!this.transferLabels ? 'Yes' : 'No');
+  console.log('Transfer assignee? \t\t', !!this.transferAssignee? 'Yes' : 'No');
+  if (this.onlyLabels) {
+    console.log('Only transfer labelled as \t', this.onlyLabels);
+  }
+  console.log('-------------------------------------------------------------');
 
   this.github = new GithubApi({
     version: '3.0.0'
@@ -49,12 +59,16 @@ IssuesTransfer.prototype.run = function(cb) {
   }
 
   var sourceOpts = {
-    state: this.state,
+    state: 'open',
     user: sourceUser[0],
     repo: sourceUser[1],
     per_page: 100,
     page: 1
   };
+
+  if (self.onlyLabels) {
+    sourceOpts.labels = self.onlyLabels;
+  }
 
   async.whilst(
     continueWalking,
@@ -91,8 +105,8 @@ IssuesTransfer.prototype.run = function(cb) {
       throw new Error('--to option must be slash delimited user/repo');
     }
 
+    var created = 0;
     async.eachSeries(issuesFound, function(issue, next) {
-
       var boilerplate = 'Transferred from: ' + issue.html_url + '\r\n\r\n';
       if (self.link === false) {
         boilerplate = '';
@@ -103,17 +117,30 @@ IssuesTransfer.prototype.run = function(cb) {
         body: boilerplate + issue.body,
         user: destinationUser[0],
         repo: destinationUser[1],
-        labels: self.labels ? _.pluck(issue.labels, 'name') : []
+        labels: self.transferLabels ? _.pluck(issue.labels, 'name') : []
       };
 
-      self.github.issues.create(createOpts, next);
+      if (self.transferAssignee && issue.assignee) {
+        createOpts.assignee = issue.assignee.login;
+      }
+
+      self.github.issues.create(createOpts, function(err) {
+        if (err) {
+          return next(err);
+        }
+
+        created++;
+        next();
+      });
     }, function(err) {
       if (err) {
         console.error('Failed to create issue');
         return cb(err);
       }
 
-      cb();
+
+      console.log('Issues transferred \t\t', created);
+      cb(null);
     });
   }
 };

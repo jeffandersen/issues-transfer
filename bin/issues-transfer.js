@@ -5,13 +5,11 @@ var IssuesTransfer = require('../index').IssuesTransfer;
 
 function main() {
   var issuesTransfer = new IssuesTransfer(argv);
-  issuesTransfer.run(function(err) {
+  issuesTransfer.run(function(err, created) {
     if (err) {
       console.error(err);
       return process.exit(1);
     }
-  
-    console.log('Complete.');
   });
 }
 
