@@ -1,0 +1,30 @@
+{
+  "name": "issues-transfer",
+  "version": "0.1.0",
+  "description": "Transfer issues from one Github repo to another",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:jeffandersen/issues-transfer.git"
+  },
+  "keywords": [
+    "github",
+    "issues",
+    "transfer"
+  ],
+  "author": "Jeff Andersen <jeffandersen@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jeffandersen/issues-transfer/issues"
+  },
+  "homepage": "https://github.com/jeffandersen/issues-transfer",
+  "dependencies": {
+    "async": "0.9.0",
+    "github": "0.2.2",
+    "lodash": "2.4.1",
+    "minimist": "1.1.0"
+  }
+}
