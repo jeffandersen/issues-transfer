@@ -1,6 +1,6 @@
 {
   "name": "issues-transfer",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Transfer issues from one Github repo to another",
   "main": "index.js",
   "scripts": {
